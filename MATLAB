@@ -1,1 +1,77 @@
-MATLAB code
+%PSO
+dimPar = 2;
+upBnd = [10 15]';
+lowBnd = [-5 0]';
+globMinCost = 0.397887358;
+n_part = 30;
+v_max = 5*ones(1,dimPar)';
+v_min = -5*ones(1,dimPar)';
+
+w = 0.8;
+c1 = 2;c2 = 2;
+
+%初始值
+for i = 1:n_part
+    x_pos(i,:) = ((upBnd-lowBnd).*rand(dimPar,1)+lowBnd)';
+    vel(i,:) = ((v_max-v_min).*rand(dimPar,1)+v_min)';
+end
+cost = 1e10*ones(n_part);
+%对象最优解的位置与函数值
+pos_pbest = x_pos;
+cost_pbest = cost;
+%全局最优解的位置与函数值
+pos_gbest = [];
+cost_gbest = 1e10;
+
+iter = 1
+while iter == 1 || err > 1e-6
+    for pt = 1:n_part
+        cost(pt) = TestBR(x_pos(pt,:));
+        %把当前对象与pbest比较
+        if cost(pt) < cost_pbest(pt)
+            pos_pbest(pt,:) = x_pos(pt,:);
+            cost_pbest(pt) = cost(pt);
+        end
+        %把当前对象与gbest比较
+        if cost(pt) < cost_gbest
+            pos_gbest = x_pos(pt,:);
+            cost_gbest = cost(pt);
+        end
+    %计算新移动方向的速度
+        vel_mod = c1*rand*(pos_pbest(pt,:)-x_pos(pt,:))+c2*rand*(pos_gbest-x_pos(pt,:));
+        vel(pt,:) = w*vel(pt,:) + vel_mod;
+    %速度的最大值与最小值限制
+        vel(pt,:) = min(v_max',vel(pt,:));
+        vel(pt,:) = max(v_min',vel(pt,:));
+        %计算下一次的对象位置
+        x_pos(pt,:) = x_pos(pt,:) + vel(pt,:);
+        
+        %限制位置向量
+        x_pos(pt,:) = min(upBnd',x_pos(pt,:));
+        x_pos(pt,:) = max(lowBnd',x_pos(pt,:));
+        %表示对象位置
+        figure(1)
+        plot(x_pos(pt,1),x_pos(pt,2),'ko');
+        axis([lowBnd(1) upBnd(1) lowBnd(2) upBnd(2)]);
+        hold on;
+    end
+    err = cost_gbest-globMinCost;
+    sprintf('iter = %d,pos_gbest = [%.2f %.2f],cost_gbest=%.4e,error=%.4e',iter,pos_gbest(1),pos_gbest(2),cost_gbest,err)
+    %在命令窗口显示对象值
+    gcost(iter) = cost_gbest;
+    iter = iter+1;
+    
+    figure(1)
+%    contour(fx1,fx2,f');
+    plot(-3.142,12.275,'bx',3.142,2.275,'bx',9.425,2.425,'bx');
+        xlabel('x1');
+        ylabel('x2');
+end
+iters = 1:iter-1;
+
+figure(2)
+plot(iter,gcost);
+xlabel('iteration');
+ylabel('cost');
+grid
+title('使用PSO做函数优化')
